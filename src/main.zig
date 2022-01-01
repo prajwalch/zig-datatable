@@ -4,8 +4,6 @@ const dt = @import("datatable.zig");
 const testing = std.testing;
 
 test "test data table" {
-    //try testing.expect(add(3, 7) == 10);
-
     var columns = [_]dt.Column{
         .{ .name = "Middle Name", .allow_empty = true },
         .{ .name = "Last Name" },
@@ -16,10 +14,12 @@ test "test data table" {
     var user_table = try dt.DataTable.init(std.heap.page_allocator);
     defer user_table.deinit();
 
-    try user_table.addColumn(dt.Column{ .name = "First Name" });
-    try user_table.addColumns(columns[0..]);
+    try user_table.addSingleColumn(dt.Column{ .name = "First Name" });
+    try user_table.addManyColumns(columns[0..]);
     try testing.expect(user_table.countColumns() == 5);
-    //user_table.insertData("Prajwal Chapagain 20 9815009744");
+
+    var data = [_][]const u8{ "Prajwal", "", "Chapagain", "20", "9815009744" };
+    try user_table.insertSingleData(data[0..]);
     //
     //user_table.findBy("First Name", "prajwal");
     //
