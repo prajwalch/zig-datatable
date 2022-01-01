@@ -54,7 +54,7 @@ pub const DataTable = struct {
             .columns = ArrayList(Column).init(allocator),
             .table = ArrayList(Row).init(allocator),
         };
-        try self.addColumn(.{ .name = "Id", .allow_empty = false });
+        try self.addSingleColumn(.{ .name = "Id", .allow_empty = false });
         return self;
     }
 
