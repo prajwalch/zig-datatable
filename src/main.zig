@@ -16,10 +16,11 @@ test "test data table" {
 
     try user_table.addSingleColumn(dt.Column{ .name = "First Name" });
     try user_table.addManyColumns(columns[0..]);
-    try testing.expect(user_table.countColumns() == 5);
+    try testing.expect(user_table.totalColumns() == 5);
 
     var data = [_][]const u8{ "Prajwal", "", "Chapagain", "20", "9815009744" };
     try user_table.insertSingleData(data[0..]);
+    //try testing.expect(user_table.insertSingleData(data[0..]), error.TooManyColumns);
     //
     //user_table.findBy("First Name", "prajwal");
     //

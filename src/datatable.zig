@@ -4,35 +4,23 @@ const mem = std.mem;
 const ArrayList = std.ArrayList;
 
 const Row = struct {
+    pub const Cell = struct {
+        column: *Column,
+        data: []const u8,
+    };
+
     id: usize,
-    cell: ?*Cell = null,
+    cells: ArrayList(Cell),
 
-    pub fn init(id: usize) Row {
-        return Row{ .id = id };
-    }
-
-    pub fn appendData(self: *Row, new_cell: *Cell) void {
-        if (self.cell == null) {
-            self.cell = new_cell;
-            return;
-        }
-        self.cell.append(new_cell);
-    }
-};
-
-const Cell = struct {
-    column: *Column,
-    data: []const u8,
-    next: ?*Cell = null,
-
-    pub fn append(self: *Cell, new_cell: *Cell) void {
-        var last_cell = blk: {
-            var current_cell = self;
-            while (true) {
-                current_cell = current_cell.next orelse break :blk current_cell;
-            }
+    pub fn init(allocator: mem.Allocator, id: usize) Row {
+        return Row{
+            .id = id,
+            .cells = ArrayList(Cell).init(allocator),
         };
-        last_cell.next = new_cell;
+    }
+
+    pub fn appendCell(self: *Row, new_cell: Cell) !void {
+        try self.cells.append(new_cell);
     }
 };
 
@@ -46,13 +34,13 @@ pub const DataTable = struct {
     allocator: mem.Allocator,
     current_id: usize = 0,
     columns: ArrayList(Column),
-    table: ArrayList(Row) = undefined,
+    rows: ArrayList(Row),
 
     pub fn init(allocator: mem.Allocator) !DataTable {
         var self = DataTable{
             .allocator = allocator,
             .columns = ArrayList(Column).init(allocator),
-            .table = ArrayList(Row).init(allocator),
+            .rows = ArrayList(Row).init(allocator),
         };
         try self.addSingleColumn(.{ .name = "Id", .allow_empty = false });
         return self;
@@ -60,6 +48,10 @@ pub const DataTable = struct {
 
     pub fn deinit(self: DataTable) void {
         self.columns.deinit();
+        for (self.rows.items) |row| {
+            row.cells.deinit();
+        }
+        self.rows.deinit();
     }
 
     pub fn addSingleColumn(self: *DataTable, column: Column) !void {
@@ -72,26 +64,35 @@ pub const DataTable = struct {
         }
     }
 
-    pub fn countColumns(self: *DataTable) usize {
+    pub fn totalColumns(self: *DataTable) usize {
         return self.columns.items.len - 1; // without counting "Id" column
     }
 
-    pub fn insertSingleData(self: *DataTable, raw_data: [][]const u8) !void {
+    pub fn insertSingleData(self: *DataTable, single_data: [][]const u8) !void {
         var columns_index: usize = 1; // skip first Id column
-        var row = Row.init(self.current_id);
+        var row = Row.init(self.allocator, self.current_id);
 
-        if (raw_data.len > self.countColumns()) return error.TooLongData;
+        if (single_data.len > self.totalColumns()) return error.TooManyColumns;
 
-        for (raw_data) |data| {
-            var current_column = self.columns.items[columns_index];
+        for (single_data) |data| {
+            var current_column = &self.columns.items[columns_index];
 
             if (!current_column.allow_empty and data.len == 0) {
                 return error.EmptyData;
             }
-            row.appendData(Cell{ .column = current_column, .data = data });
+            if (data.len > current_column.max_len) {
+                return error.TooLongDataLength;
+            }
+            try row.appendCell(.{ .column = current_column, .data = data });
             columns_index += 1;
         }
-        try self.table.append(row);
+        try self.rows.append(row);
         self.current_id += 1;
+    }
+
+    pub fn insertManyData(self: *DataTable, many_data: [][][]const u8) !void {
+        for (many_data) |single_data| {
+            try self.insertSingleData(single_data);
+        }
     }
 };
