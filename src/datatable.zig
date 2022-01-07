@@ -92,7 +92,39 @@ pub const DataTable = struct {
 
     pub fn insertManyData(self: *DataTable, many_data: [][][]const u8) !void {
         for (many_data) |single_data| {
-            try self.insertSingleData(single_data);
+            try self.insertSingleData(single_data[0..]);
         }
+    }
+
+    pub fn isDataExistOnColumn(self: *DataTable, which_column: []const u8, which_data: []const u8) bool {
+        for (self.rows.items) |row| {
+            for (row.cells.items) |cell| {
+                if (mem.eql(u8, cell.column.name, which_column) and mem.eql(u8, cell.data, which_data))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    pub fn searchData(self: *DataTable, which_column: []const u8, which_data: []const u8) ![][]const u8 {
+        var found_row_index: ?usize = null;
+
+        outer: for (self.rows.items) |row, i| {
+            for (row.cells.items) |cell| {
+                if (mem.eql(u8, cell.column.name, which_column) and mem.eql(u8, cell.data, which_data)) {
+                    found_row_index = i;
+                    break :outer;
+                }
+            }
+        }
+        if (found_row_index == null) return error.DataNotFound;
+
+        var found_data = ArrayList([]const u8).init(self.allocator);
+        defer found_data.deinit();
+
+        for (self.rows.items[found_row_index.?].cells.items) |cell| {
+            try found_data.append(cell.data);
+        }
+        return found_data.toOwnedSlice();
     }
 };
