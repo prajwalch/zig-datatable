@@ -26,7 +26,6 @@ test "test data table" {
 
     var searched_data = try user_table.searchData("Ph No", "9815009744");
     try testing.expect(searched_data.len == 5);
-    std.debug.print("\n{s}\n", .{searched_data});
 
     //var many_data = [_][5][]const u8{
     //    .{ "Prajwal", "", "Chapagain", "20", "9815009744" },
@@ -34,9 +33,11 @@ test "test data table" {
     //try user_table.insertManyData(many_data[0..]);
     //try testing.expect(user_table.insertSingleData(data[0..]), error.TooManyColumns);
     //
-    //user_table.findBy("First Name", "prajwal");
-    //
-    //user_table.selectColumnByNum(2);
+    var col1_data = try user_table.selectColumnByNum(1);
+    try testing.expect(col1_data.len == 1 and std.mem.eql(u8, col1_data[0], "Prajwal"));
+
+    var col4_data = try user_table.selectColumnByName("Age");
+    try testing.expect(col4_data.len == 1 and std.mem.eql(u8, col4_data[0], "20"));
     //user_table.selectColumnByName("First Name");
     //
     //user_table.deleteColumnByNum(2);

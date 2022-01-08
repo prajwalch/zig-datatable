@@ -127,4 +127,31 @@ pub const DataTable = struct {
         }
         return found_data.toOwnedSlice();
     }
+
+    pub fn selectColumnByNum(self: *DataTable, which_column_num: usize) ![][]const u8 {
+        if (which_column_num > self.totalColumns()) return error.ColumnNotFound;
+        if (self.rows.items.len == 0) return error.EmptyData;
+
+        var column_index = which_column_num - 1;
+        var data = ArrayList([]const u8).init(self.allocator);
+        defer data.deinit();
+
+        for (self.rows.items) |row| {
+            try data.append(row.cells.items[column_index].data);
+        }
+        return data.toOwnedSlice();
+    }
+
+    pub fn selectColumnByName(self: *DataTable, which_column: []const u8) ![][]const u8 {
+        var column_index: ?usize = null;
+        for (self.columns.items) |column, i| {
+            if (mem.eql(u8, column.name, which_column)) {
+                column_index = i;
+                break;
+            }
+        }
+
+        if (column_index == null) return error.ColumnNotFound;
+        return self.selectColumnByNum(column_index.?);
+    }
 };
