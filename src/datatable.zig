@@ -151,7 +151,10 @@ pub const DataTable = struct {
             }
         }
 
-        if (column_index == null) return error.ColumnNotFound;
-        return self.selectColumnByNum(column_index.?);
+        if (column_index) |idx| {
+            return self.selectColumnByNum(idx);
+        } else {
+            return error.ColumunNotFound;
+        }
     }
 };
