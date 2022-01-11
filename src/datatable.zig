@@ -107,25 +107,27 @@ pub const DataTable = struct {
     }
 
     pub fn searchData(self: *DataTable, which_column: []const u8, which_data: []const u8) ![][]const u8 {
-        var found_row_index: ?usize = null;
+        var row_index: ?usize = null;
 
         outer: for (self.rows.items) |row, i| {
             for (row.cells.items) |cell| {
                 if (mem.eql(u8, cell.column.name, which_column) and mem.eql(u8, cell.data, which_data)) {
-                    found_row_index = i;
+                    row_index = i;
                     break :outer;
                 }
             }
         }
-        if (found_row_index == null) return error.DataNotFound;
+        if (row_index) |idx| {
+            var found_data = ArrayList([]const u8).init(self.allocator);
+            defer found_data.deinit();
 
-        var found_data = ArrayList([]const u8).init(self.allocator);
-        defer found_data.deinit();
-
-        for (self.rows.items[found_row_index.?].cells.items) |cell| {
-            try found_data.append(cell.data);
+            for (self.rows.items[idx].cells.items) |cell| {
+                try found_data.append(cell.data);
+            }
+            return found_data.toOwnedSlice();
+        } else {
+            return error.DataNotFound;
         }
-        return found_data.toOwnedSlice();
     }
 
     pub fn selectColumnByNum(self: *DataTable, which_column_num: usize) ![][]const u8 {
