@@ -18,13 +18,13 @@ test "test data table" {
     try user_table.addManyColumns(columns[0..]);
     try testing.expect(user_table.totalColumns() == 5);
 
-    const single_data = [_][]const u8{ "Prajwal", "", "Chapagain", "20", "9815009744" };
-    const many_data = &[_][]const []const u8{
+    try user_table.insertSingleData(&[_][]const u8{
+        "Prajwal", "", "Chapagain", "20", "9815009744",
+    });
+    try user_table.insertManyData(&[_][]const []const u8{
         &.{ "Samyam", "", "Timsina", "18", "1234567890" },
         &.{ "Ramesh", "", "Dhungana", "19", "9800000900" },
-    };
-    try user_table.insertSingleData(single_data[0..]);
-    try user_table.insertManyData(many_data[0..]);
+    });
 
     try testing.expect(user_table.isDataExistOnColumn("Last Name", "Ramesh") == false);
     try testing.expect(user_table.isDataExistOnColumn("First Name", "Prajwal") == true);
