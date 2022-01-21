@@ -4,7 +4,7 @@ const dt = @import("datatable.zig");
 const testing = std.testing;
 
 test "test data table" {
-    var columns = [_]dt.Column{
+    const columns = [_]dt.Column{
         .{ .name = "Middle Name", .allow_empty = true },
         .{ .name = "Last Name" },
         .{ .name = "Age" },

@@ -58,7 +58,7 @@ pub const DataTable = struct {
         try self.columns.append(column);
     }
 
-    pub fn addManyColumns(self: *DataTable, columns: []Column) !void {
+    pub fn addManyColumns(self: *DataTable, columns: []const Column) !void {
         for (columns) |column| {
             try self.addSingleColumn(column);
         }
