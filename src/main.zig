@@ -37,8 +37,6 @@ test "test data table" {
 
     var col4_data = try user_table.selectColumnByName("Ph No");
     try testing.expect(col4_data.len == 3 and std.mem.eql(u8, col4_data[1], "1234567890"));
-    //user_table.selectColumnByName("First Name");
-    //
     //user_table.deleteColumnByNum(2);
     //user_table.deleteColumnByName("Date");
 }
