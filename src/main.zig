@@ -18,26 +18,25 @@ test "test data table" {
     try user_table.addManyColumns(columns[0..]);
     try testing.expect(user_table.totalColumns() == 5);
 
-    var data = [_][]const u8{ "Prajwal", "", "Chapagain", "20", "9815009744" };
-    try user_table.insertSingleData(data[0..]);
+    const single_data = [_][]const u8{ "Prajwal", "", "Chapagain", "20", "9815009744" };
+    const many_data = &[_][]const []const u8{
+        &.{ "Samyam", "", "Timsina", "18", "1234567890" },
+        &.{ "Ramesh", "", "Dhungana", "19", "9800000900" },
+    };
+    try user_table.insertSingleData(single_data[0..]);
+    try user_table.insertManyData(many_data[0..]);
 
-    try testing.expect(user_table.isDataExistOnColumn("First Name", "Rmaesh") == false);
+    try testing.expect(user_table.isDataExistOnColumn("Last Name", "Ramesh") == false);
     try testing.expect(user_table.isDataExistOnColumn("First Name", "Prajwal") == true);
 
     var searched_data = try user_table.searchData("Ph No", "9815009744");
     try testing.expect(searched_data.len == 5);
 
-    //var many_data = [_][5][]const u8{
-    //    .{ "Prajwal", "", "Chapagain", "20", "9815009744" },
-    //};
-    //try user_table.insertManyData(many_data[0..]);
-    //try testing.expect(user_table.insertSingleData(data[0..]), error.TooManyColumns);
-    //
     var col1_data = try user_table.selectColumnByNum(1);
-    try testing.expect(col1_data.len == 1 and std.mem.eql(u8, col1_data[0], "Prajwal"));
+    try testing.expect(col1_data.len == 3 and std.mem.eql(u8, col1_data[2], "Ramesh"));
 
-    var col4_data = try user_table.selectColumnByName("Age");
-    try testing.expect(col4_data.len == 1 and std.mem.eql(u8, col4_data[0], "20"));
+    var col4_data = try user_table.selectColumnByName("Ph No");
+    try testing.expect(col4_data.len == 3 and std.mem.eql(u8, col4_data[1], "1234567890"));
     //user_table.selectColumnByName("First Name");
     //
     //user_table.deleteColumnByNum(2);

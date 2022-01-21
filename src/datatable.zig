@@ -68,7 +68,7 @@ pub const DataTable = struct {
         return self.columns.items.len - 1; // without counting "Id" column
     }
 
-    pub fn insertSingleData(self: *DataTable, single_data: [][]const u8) !void {
+    pub fn insertSingleData(self: *DataTable, single_data: []const []const u8) !void {
         var columns_index: usize = 1; // skip first Id column
         var row = Row.init(self.allocator, self.current_id);
 
@@ -90,7 +90,7 @@ pub const DataTable = struct {
         self.current_id += 1;
     }
 
-    pub fn insertManyData(self: *DataTable, many_data: [][][]const u8) !void {
+    pub fn insertManyData(self: *DataTable, many_data: []const []const []const u8) !void {
         for (many_data) |single_data| {
             try self.insertSingleData(single_data[0..]);
         }
