@@ -9,10 +9,10 @@ const Row = struct {
         data: []const u8,
     };
 
-    id: usize,
+    id: ?usize,
     cells: ArrayList(Cell),
 
-    pub fn init(allocator: mem.Allocator, id: usize) Row {
+    pub fn init(allocator: mem.Allocator, id: ?usize) Row {
         return Row{
             .id = id,
             .cells = ArrayList(Cell).init(allocator),
@@ -32,16 +32,21 @@ pub const Column = struct {
 
 pub const DataTable = struct {
     allocator: mem.Allocator,
-    current_id: usize = 0,
+    current_id: ?usize = null,
     columns: ArrayList(Column),
     rows: ArrayList(Row),
 
-    pub fn init(allocator: mem.Allocator) !DataTable {
-        var self = DataTable{
+    pub fn init(allocator: mem.Allocator) DataTable {
+        return DataTable{
             .allocator = allocator,
             .columns = ArrayList(Column).init(allocator),
             .rows = ArrayList(Row).init(allocator),
         };
+    }
+
+    pub fn initWithIdColumn(allocator: mem.Allocator) !DataTable {
+        var self = DataTable.init(allocator);
+        self.current_id = 0;
         try self.addSingleColumn(.{ .name = "Id", .allow_empty = false });
         return self;
     }
@@ -65,29 +70,28 @@ pub const DataTable = struct {
     }
 
     pub fn totalColumns(self: *DataTable) usize {
-        return self.columns.items.len - 1; // without counting "Id" column
+        return self.columns.items.len;
     }
 
     pub fn insertSingleData(self: *DataTable, single_data: []const []const u8) !void {
-        var columns_index: usize = 1; // skip first Id column
-        var row = Row.init(self.allocator, self.current_id);
-
         if (single_data.len > self.totalColumns()) return error.TooManyColumns;
+
+        var columns_index: usize = if (self.current_id == null) 0 else 1; // skip Id column if have
+        var row = Row.init(self.allocator, self.current_id);
 
         for (single_data) |data| {
             var current_column = &self.columns.items[columns_index];
 
-            if (!current_column.allow_empty and data.len == 0) {
+            if (!current_column.allow_empty and data.len == 0)
                 return error.EmptyData;
-            }
-            if (data.len > current_column.max_len) {
+            if (data.len > current_column.max_len)
                 return error.TooLongDataLength;
-            }
+
             try row.appendCell(.{ .column = current_column, .data = data });
             columns_index += 1;
         }
         try self.rows.append(row);
-        self.current_id += 1;
+        if (self.current_id) |*id| id.* += 1;
     }
 
     pub fn insertManyData(self: *DataTable, many_data: []const []const []const u8) !void {
@@ -154,7 +158,7 @@ pub const DataTable = struct {
         }
 
         if (column_index) |idx| {
-            return self.selectColumnByNum(idx);
+            return self.selectColumnByNum(if (self.current_id == null) idx + 1 else idx);
         } else {
             return error.ColumnNotFound;
         }
